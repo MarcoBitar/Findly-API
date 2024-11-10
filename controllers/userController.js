@@ -44,6 +44,12 @@ class UserController {
         try {
             // Extract user data (name, email, password) from the request body
             const { name, email, pass } = req.body;
+            // Check if the username already exists
+            const existingUser = await userService.findUserByName(name);
+            if(existingUser) {
+                // Respond with error if the username is taken
+                return res.status(409).json({message: 'Username already exists'});
+            }
             // Call the user service to create the new user
             const newUser = await userService.createUser({ name, email, pass });
             // Respond with the newly created user and HTTP status 201 (Created)
@@ -62,11 +68,26 @@ class UserController {
             const id = parseInt(req.params.id, 10);
             // Extract updated user data from the request body
             const { name, email, pass, points, rewards } = req.body;
+            // Fetchs the current user by id
+            const currentUser = await userService.getUserById(id);
+            // Checks if user_id exists
+            if(!currentUser) {
+                // Respond with 404 if user not found
+                return res.status(404).json({message: 'User not found'});
+            }
+            if(name !== currentUser.name) {
+                // If the username has changed, check if the new username already exists
+                const existingUser = await userService.findUserByName(name);
+                if(existingUser) {
+                    // Respond with error if the username is taken
+                    return res.status(409).json({message: 'Username already exists'});
+                }
+            }
             // Call the user service to update the user's data
             const success = await userService.updateUser(id, { name, email, pass, points, rewards });
-            // If the update fails, respond with 404 (Not Found)
+            // If the update fails, respond with 304 (Not Modified)
             if (!success) {
-                return res.status(404).json({message: 'User not found or no changes made'});
+                return res.status(304).json({message: 'No changes made'});
             }
             // Respond with a success message and HTTP status 200 (OK)
             res.status(200).json({message: 'User updated successfully'});

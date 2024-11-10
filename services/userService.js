@@ -82,6 +82,14 @@ class UserService {
         // Return true if the result contains any rows (i.e., valid login), otherwise return false
         return result.length > 0;
     }
+
+    // Finds if a username exists in the database
+    async findUserByName(name) {
+        // Query the database to check if this username is already in use
+        const [existingUser] = await this.pool.query(
+            'SELECT * FROM users WHERE username = ?', [name]);
+        return existingUser.length > 0;
+    }
 }
 
 // Export the instance of UserService to be used elsewhere
